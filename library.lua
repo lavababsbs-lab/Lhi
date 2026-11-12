@@ -581,10 +581,6 @@ local function apply_theme(changes)
 	end
 end
 
-function library:update_theme(key, color)
-	apply_theme({ [key] = color })
-end
-
 -- Saturation/value of each accent tone relative to the main accent, taken from
 -- the Figma palette, so one colour can re-tint the whole family.
 local ACCENT_FAMILY = {
@@ -603,6 +599,17 @@ function library:set_accent(color)
 		changes[key] = Color3.fromHSV(hue, math.clamp(saturation * ratio[1], 0, 1), math.clamp(value * ratio[2], 0, 1))
 	end
 	apply_theme(changes)
+end
+
+-- Changes one theme colour. "accent" re-tints the whole accent family, which is
+-- what scripts written for similar libraries expect; load_theme({ accent = c })
+-- sets that single tone.
+function library:update_theme(key, color)
+	if key == "accent" then
+		self:set_accent(color)
+	else
+		apply_theme({ [key] = color })
+	end
 end
 
 --// instances
@@ -1644,9 +1651,19 @@ function library:window(options)
 	end
 	window:set_title_animation(mode)
 
-	-- Dot-callable helper kept for scripts written against similar libraries.
+	-- Dot-callable helpers kept for scripts written against similar libraries.
 	window.set_menu_visibility = method(window, function(visible)
 		library:set_open(visible)
+	end)
+	window.toggle_list = method(window, function(visible)
+		if state.keybind_list then
+			state.keybind_list.set_visible(visible)
+		end
+	end)
+	window.toggle_watermark = method(window, function(visible)
+		if state.watermark then
+			state.watermark.set_visible(visible)
+		end
 	end)
 	return window
 end
@@ -2164,7 +2181,7 @@ local function new_keybind(parent, options, order, fallback_name)
 	local object = {
 		class = "keybind",
 		flag = options.flag,
-		name = options.name or fallback_name or "keybind",
+		name = options.display or options.keybind_name or options.name or fallback_name or "keybind",
 		key = options.key or options.default,
 		mode = if table.find(KEYBIND_MODES, options.mode) then options.mode else "toggle",
 		active = false,
@@ -2903,7 +2920,7 @@ function Section:textbox(options)
 		Position = fromOffset(2, 1),
 		Size = UDim2.new(1, -4, 0, 12),
 		ClipsDescendants = true,
-		PlaceholderText = options.placeholder or options.placeholdertext or "",
+		PlaceholderText = options.placeholder or options.placeholdertext or options.holder or options.holdertext or "",
 		Theme = { PlaceholderColor3 = "text_dim" },
 	})
 
