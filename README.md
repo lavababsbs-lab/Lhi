@@ -124,7 +124,17 @@ library:update_theme("window_background", Color3.fromRGB(10, 10, 14))
 library:save_theme()   library:reset_theme()   library:load_theme(json_or_table)
 ```
 
-A saved theme (`rainworld/theme.json`) is applied on the next load.
+`library:update_theme("accent", color)` does the same as `set_accent`, so scripts that only know that call still recolour the whole menu. A saved theme (`rainworld/theme.json`) is applied on the next load.
+
+## Coming from similar libraries
+
+The structure follows the snake_case convention of i77lhm's libraries: `library:window` → `window:tab` → `tab:section` → elements, one lowercase options table per call, values in `library.flags`, and setters that can be called with a dot (`toggle.set(true)`). A few extras exist only to make porting easier:
+
+- Option aliases: `title` for a window name, `minimum` / `maximum` / `decimal` on sliders, `default` for a colour picker's colour or a keybind's key, `text` on buttons, `placeholdertext` / `holder` on textboxes, `display` or `keybind_name` for the name a keybind shows in the list.
+- A colour picker or keybind created on a section without a `name` attaches to the toggle made just before it.
+- `window.set_menu_visibility(bool)`, `window.toggle_list(bool)` and `window.toggle_watermark(bool)`.
+
+Differences to watch for when porting a script: colour flags are `{ color, alpha, transparency }` and keybind flags `{ key, mode, active }`, all lowercase; there is no `tab:column`, a section picks its column with `side`; and configs are saved with `save_config(name)` (writing `get_config()` to a file yourself still works).
 
 ## Animations
 
